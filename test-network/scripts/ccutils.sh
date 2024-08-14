@@ -127,7 +127,15 @@ function chaincodeInvokeInit() {
 
   local rc=1
   local COUNTER=1
+  if [ "$CC_INIT_FCN" != "NA" && "$CC_INIT_ARGS" != "NA" ]; then
+    local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":["'${CC_INIT_ARGS}'"]}'
+  elif [ "$CC_INIT_FCN" != "NA" ]; then
   local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
+  else
+    local fcn_call='{"Args":["'${CC_INIT_ARGS}'"]}'
+  fi
+
+
   # continue to poll
   # we either get a successful response, or reach MAX RETRY
   while [ $rc -ne 0 -a $COUNTER -lt $MAX_RETRY ]; do

@@ -14,6 +14,7 @@ CC_COLL_CONFIG=${9:-"NA"}
 DELAY=${10:-"3"}
 MAX_RETRY=${11:-"5"}
 VERBOSE=${12:-"false"}
+CC_INIT_ARGS=${13:-"NA"}
 
 println "executing with the following"
 println "- CHANNEL_NAME: ${C_GREEN}${CHANNEL_NAME}${C_RESET}"
@@ -28,10 +29,11 @@ println "- CC_INIT_FCN: ${C_GREEN}${CC_INIT_FCN}${C_RESET}"
 println "- DELAY: ${C_GREEN}${DELAY}${C_RESET}"
 println "- MAX_RETRY: ${C_GREEN}${MAX_RETRY}${C_RESET}"
 println "- VERBOSE: ${C_GREEN}${VERBOSE}${C_RESET}"
+println "- CC_INIT_ARGS: ${C_GREEN}${CC_INIT_ARGS}${C_RESET}"
 
 INIT_REQUIRED="--init-required"
 # check if the init fcn should be called
-if [ "$CC_INIT_FCN" = "NA" ]; then
+if [ "$CC_INIT_FCN" = "NA" && "$CC_INIT_ARGS" = "NA" ]; then
   INIT_REQUIRED=""
 fi
 
@@ -109,7 +111,7 @@ queryCommitted 2
 
 ## Invoke the chaincode - this does require that the chaincode have the 'initLedger'
 ## method defined
-if [ "$CC_INIT_FCN" = "NA" ]; then
+if [ "$INIT_REQUIRED" = "" ]; then
   infoln "Chaincode initialization is not required"
 else
   chaincodeInvokeInit 1 2
