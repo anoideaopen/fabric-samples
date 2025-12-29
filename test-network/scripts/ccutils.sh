@@ -131,7 +131,7 @@ function chaincodeInvokeInit() {
     local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":["'${CC_INIT_ARGS}'"]}'
   elif [ "$CC_INIT_FCN" != "NA" ]; then
     local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
-  elif [ "CC_INIT_ARGS" == "NA" ]; then
+  elif [ "$CC_INIT_ARGS" == "NA" ]; then
       local fcn_call='{"Args":[]}'
   else
     local fcn_call='{"Args":["'${CC_INIT_ARGS}'"]}'
