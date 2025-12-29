@@ -130,7 +130,7 @@ function chaincodeInvokeInit() {
   if [ "$CC_INIT_FCN" != "NA" && "$CC_INIT_ARGS" != "NA" ]; then
     local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":["'${CC_INIT_ARGS}'"]}'
   elif [ "$CC_INIT_FCN" != "NA" ]; then
-  local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
+    local fcn_call='{"function":"'${CC_INIT_FCN}'","Args":[]}'
   else
     local fcn_call='{"Args":["'${CC_INIT_ARGS}'"]}'
   fi
@@ -300,7 +300,7 @@ chaincodeInvoke() {
   CHANNEL=$2
   CC_NAME=$3
   CC_INVOKE_CONSTRUCTOR=$4
-  
+
   infoln "Invoking on peer0.org${ORG} on channel '$CHANNEL_NAME'..."
   local rc=1
   local COUNTER=1
