@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright IBM Corp All Rights Reserved
 #
@@ -79,7 +79,7 @@ function checkPrereqs() {
   infoln "DOCKER_IMAGE_VERSION=$DOCKER_IMAGE_VERSION"
 
   if [ "$LOCAL_VERSION" != "$DOCKER_IMAGE_VERSION" ]; then
-    warnln "Local fabric binaries and docker images are out of  sync. This may cause problems."
+    warnln "Local fabric binaries and docker images are out of sync. This may cause problems."
   fi
 
   for UNSUPPORTED_VERSION in $NONWORKING_VERSIONS; do
@@ -222,10 +222,11 @@ function createOrgs() {
   # Create crypto material using Fabric CA
   if [ "$CRYPTO" == "Certificate Authorities" ]; then
     infoln "Generating certificates using Fabric CA"
-    ${CONTAINER_CLI_COMPOSE} -f compose/$COMPOSE_FILE_CA -f compose/$CONTAINER_CLI/${CONTAINER_CLI}-$COMPOSE_FILE_CA up -d 2>&1
+    ${CONTAINER_CLI_COMPOSE} -f compose/$COMPOSE_FILE_CA up -d 2>&1
 
     . organizations/fabric-ca/registerEnroll.sh
 
+    # Make sure CA files have been created
     while :
     do
       if [ ! -f "organizations/fabric-ca/org1/tls-cert.pem" ]; then
@@ -233,6 +234,20 @@ function createOrgs() {
       else
         break
       fi
+    done
+
+    # Make sure CA service is initialized and can accept requests before making register and enroll calls
+    export FABRIC_CA_CLIENT_HOME=${PWD}/organizations/peerOrganizations/org1.example.com/
+    COUNTER=0
+    rc=1
+    while [[ $rc -ne 0 && $COUNTER -lt $MAX_RETRY ]]; do
+      sleep 1
+      set -x
+      fabric-ca-client getcainfo -u https://admin:adminpw@localhost:7054 --caname ca-org1 --tls.certfiles "${PWD}/organizations/fabric-ca/org1/ca-cert.pem"
+      res=$?
+    { set +x; } 2>/dev/null
+    rc=$res  # Update rc
+    COUNTER=$((COUNTER + 1))
     done
 
     infoln "Creating Org1 Identities"
@@ -292,7 +307,7 @@ function networkUp() {
   COMPOSE_FILES="-f compose/${COMPOSE_FILE_BASE} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
 
   if [ "${DATABASE}" == "couchdb" ]; then
-    COMPOSE_FILES="${COMPOSE_FILES} -f compose/${COMPOSE_FILE_COUCH} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
+    COMPOSE_FILES="${COMPOSE_FILES} -f compose/${COMPOSE_FILE_COUCH}"
   fi
 
   DOCKER_SOCK="${DOCKER_SOCK}" ${CONTAINER_CLI_COMPOSE} ${COMPOSE_FILES} up -d 2>&1
@@ -420,8 +435,8 @@ function networkDown() {
   local temp_compose=$COMPOSE_FILE_BASE
   COMPOSE_FILE_BASE=compose-bft-test-net.yaml
   COMPOSE_BASE_FILES="-f compose/${COMPOSE_FILE_BASE} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_BASE}"
-  COMPOSE_COUCH_FILES="-f compose/${COMPOSE_FILE_COUCH} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_COUCH}"
-  COMPOSE_CA_FILES="-f compose/${COMPOSE_FILE_CA} -f compose/${CONTAINER_CLI}/${CONTAINER_CLI}-${COMPOSE_FILE_CA}"
+  COMPOSE_COUCH_FILES="-f compose/${COMPOSE_FILE_COUCH}"
+  COMPOSE_CA_FILES="-f compose/${COMPOSE_FILE_CA}"
   COMPOSE_FILES="${COMPOSE_BASE_FILES} ${COMPOSE_COUCH_FILES} ${COMPOSE_CA_FILES}"
 
   # stop org3 containers also in addition to org1 and org2, in case we were running sample to add org3
@@ -622,11 +637,6 @@ while [[ $# -ge 1 ]] ; do
   esac
   shift
 done
-
-## Check if user attempts to use BFT orderer and CA together
-if [[ $BFT -eq 1 && "$CRYPTO" == "Certificate Authorities" ]]; then
-  fatalln "This sample does not yet support the use of consensus type BFT and CA together."
-fi
 
 if [ $BFT -eq 1 ]; then
   export FABRIC_CFG_PATH=${PWD}/bft-config

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -41,9 +41,20 @@ print "Initializing Typescript off-chain data application"
 pushd ../off_chain_data/application-typescript
 rm -f checkpoint.json store.log
 npm install
-print "Running the output app"
+print "Running the Typescript app"
 SIMULATED_FAILURE_COUNT=1 npm start getAllAssets transact getAllAssets listen
 SIMULATED_FAILURE_COUNT=1 npm start listen
+popd
+
+# Run off-chain data Go application
+export CHAINCODE_NAME=go_off_chain_data
+deployChaincode
+print "Initializing Go off-chain data application"
+pushd ../off_chain_data/application-go
+rm -f checkpoint.json store.log
+print "Running the Go app"
+SIMULATED_FAILURE_COUNT=1 go run . getAllAssets transact getAllAssets listen
+SIMULATED_FAILURE_COUNT=1 go run . listen
 popd
 
 # Run off-chain data Java application
@@ -53,9 +64,15 @@ deployChaincode
 print "Initializing off-chain data application"
 pushd ../off_chain_data/application-java
 rm -f app/checkpoint.json app/store.log
-print "Running the output app"
+print "Running the Gradle app"
 SIMULATED_FAILURE_COUNT=1 ./gradlew run --quiet --args='getAllAssets transact getAllAssets listen'
 SIMULATED_FAILURE_COUNT=1 ./gradlew run --quiet --args=listen
+pushd app
+rm -f checkpoint.json store.log
+print "Executing Maven application"
+SIMULATED_FAILURE_COUNT=1 mvn --batch-mode --no-transfer-progress compile exec:java -Dexec.mainClass=App -Dexec.args='getAllAssets transact getAllAssets listen'
+SIMULATED_FAILURE_COUNT=1 mvn --batch-mode --no-transfer-progress compile exec:java -Dexec.mainClass=App -Dexec.args=listen
+popd
 popd
 
 stopNetwork

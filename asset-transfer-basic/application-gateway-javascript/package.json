@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Asset Transfer Basic Application implemented in JavaScript using fabric-gateway",
     "engines": {
-        "node": ">=18"
+        "node": ">=20"
     },
     "scripts": {
         "lint": "eslint src",
@@ -14,8 +14,8 @@
     "author": "Hyperledger",
     "license": "Apache-2.0",
     "dependencies": {
-        "@grpc/grpc-js": "^1.10",
-        "@hyperledger/fabric-gateway": "^1.5"
+        "@grpc/grpc-js": "^1.14.0",
+        "@hyperledger/fabric-gateway": "^1.10.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.5.0",

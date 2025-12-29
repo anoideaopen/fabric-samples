@@ -50,7 +50,7 @@ cluster_type    := env_var_or_default("WORKSHOP_CLUSTER_TYPE",       "k8s")
 
 # Start a local KIND cluster with nginx, localhost:5000 registry, and *.localho.st alias in kube DNS
 kind: unkind
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -e -o pipefail
 
     infrastructure/kind_with_nginx.sh {{cluster_name}}
@@ -62,7 +62,7 @@ kind: unkind
 
 # Shut down the KIND cluster
 unkind:
-    #!/bin/bash
+    #!/usr/bin/env bash
     kind delete cluster --name {{cluster_name}}
 
     if docker inspect kind-registry &>/dev/null; then
@@ -73,7 +73,7 @@ unkind:
 
 # Bring up the nginx ingress controller on the target k8s cluster
 nginx:
-    #!/bin/bash
+    #!/usr/bin/env bash
     kubectl apply -k https://github.com/hyperledger-labs/fabric-operator.git/config/ingress/{{ cluster_runtime }}
 
     sleep 20
@@ -130,7 +130,7 @@ test-console:
 
 # Shut down the microfab (uf) instance
 microfab-down:
-    #!/bin/bash
+    #!/usr/bin/env bash
 
     if docker inspect microfab &>/dev/null; then
         echo "Removing existing microfab container:"
@@ -140,7 +140,7 @@ microfab-down:
 
 # Start a micro fab instance and create configuration in _cfg/uf
 microfab: microfab-down
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -e -o pipefail
 
     export CFG=$CWDIR/_cfg/uf
@@ -168,15 +168,16 @@ microfab: microfab-down
             }
 
         ],
-        "capability_level":"V2_0"
+        "capability_level":"V2_5"
     }'
 
     mkdir -p $CFG
     echo
     echo "Stating microfab...."
 
-    docker run --name microfab -p 8080:8080 --add-host host.docker.internal:host-gateway --rm -d -e MICROFAB_CONFIG="${MICROFAB_CONFIG}" ghcr.io/hyperledger-labs/microfab:latest
-    sleep 5
+    timeout 60s bash -c \
+        'docker run --name microfab -p 8080:8080 --add-host host.docker.internal:host-gateway --rm -d -e MICROFAB_CONFIG="${MICROFAB_CONFIG}" ghcr.io/hyperledger-labs/microfab:latest \
+        && docker logs -f microfab | grep --max-count=1 "Microfab started"'
 
     curl -s http://console.127-0-0-1.nip.io:8080/ak/api/v1/components | weft microfab -w $CFG/_wallets -p $CFG/_gateways -m $CFG/_msp -f
     cat << EOF > $CFG/org1admin.env
@@ -186,6 +187,7 @@ microfab: microfab-down
     export FABRIC_CFG_PATH=$CWDIR/config
     export CORE_PEER_CLIENT_CONNTIMEOUT=15s
     export CORE_PEER_DELIVERYCLIENT_CONNTIMEOUT=15s
+    export ORDERER_ENDPOINT=orderer-api.127-0-0-1.nip.io:8080
     EOF
 
     cat << EOF > $CFG/org2admin.env
@@ -195,6 +197,7 @@ microfab: microfab-down
     export FABRIC_CFG_PATH=$CWDIR/config
     export CORE_PEER_CLIENT_CONNTIMEOUT=15s
     export CORE_PEER_DELIVERYCLIENT_CONNTIMEOUT=15s
+    export ORDERER_ENDPOINT=orderer-api.127-0-0-1.nip.io:8080
     EOF
 
     echo
@@ -204,7 +207,7 @@ microfab: microfab-down
 
 # Creates a chaincode package and install/approve/commit
 debugcc:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -e -o pipefail
 
     export CFG=$CWDIR/_cfg/uf
@@ -220,14 +223,15 @@ debugcc:
     export CORE_PEER_ADDRESS=org1peer-api.127-0-0-1.nip.io:8080
     export CORE_PEER_CLIENT_CONNTIMEOUT=15s
     export CORE_PEER_DELIVERYCLIENT_CONNTIMEOUT=15s
+    export ORDERER_ENDPOINT=orderer-api.127-0-0-1.nip.io:8080
 
     echo "CHAINCODE_ID=${CHAINCODE_ID}"
 
     set -x && peer lifecycle chaincode install asset-transfer.tgz &&     { set +x; } 2>/dev/null
     echo
-    set -x && peer lifecycle chaincode approveformyorg --channelID mychannel -o orderer-api.127-0-0-1.nip.io:8080 --name asset-transfer -v 0 --package-id $CHAINCODE_ID --sequence 1 --connTimeout 15s && { set +x; } 2>/dev/null
+    set -x && peer lifecycle chaincode approveformyorg --channelID mychannel -o $ORDERER_ENDPOINT --name asset-transfer -v 0 --package-id $CHAINCODE_ID --sequence 1 --connTimeout 15s && { set +x; } 2>/dev/null
     echo
-    set -x && peer lifecycle chaincode commit --channelID mychannel -o orderer-api.127-0-0-1.nip.io:8080 --name asset-transfer -v 0 --sequence 1  --connTimeout 15s && { set +x; } 2>/dev/null
+    set -x && peer lifecycle chaincode commit --channelID mychannel -o $ORDERER_ENDPOINT --name asset-transfer -v 0 --sequence 1  --connTimeout 15s && { set +x; } 2>/dev/null
     echo
     set -x && peer lifecycle chaincode querycommitted --channelID=mychannel && { set +x; } 2>/dev/null
     echo
@@ -293,7 +297,7 @@ ansible-doit: ansible-review-config ansible-operator ansible-console ansible-net
 
 # Review the Ansible Blockchain Collection configuration in _cfg/
 ansible-review-config:
-    #!/bin/bash
+    #!/usr/bin/env bash
     mkdir -p ${CWDIR}/_cfg
     rm -rf ${CWDIR}/_cfg/*  || true
 
@@ -329,7 +333,7 @@ ansible-review-config:
 
 # Start the Kubernetes fabric-operator with the Ansible Blockchain Collection
 ansible-ingress:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""
@@ -351,7 +355,7 @@ ansible-ingress:
 
 # Start the Kubernetes fabric-operator with the Ansible Blockchain Collection
 ansible-operator:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""
@@ -370,7 +374,7 @@ ansible-operator:
 
 # Start the Fabric Operations Console with the Ansible Blockchain Collection
 ansible-console:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""
@@ -388,7 +392,7 @@ ansible-console:
             ansible-playbook /playbooks/02-console-install.yml
 
 ansible-auth:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     AUTH=$(curl -X POST https://{{namespace}}-hlf-console-console.{{ingress_domain}}:443/ak/api/v2/permissions/keys -u admin:password -k -H 'Content-Type: application/json' -d '{"roles": ["writer", "manager"],"description": "newkey"}')
@@ -407,7 +411,7 @@ ansible-auth:
 
 # Build a sample Fabric network with the Ansible Blockchain Collection
 ansible-network: ansible-auth
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""
@@ -428,7 +432,7 @@ ansible-network: ansible-auth
 
 # Bring down the sample network created with the Ansible Blockchain Collection
 ansible-network-down:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     kubectl delete namespace {{ namespace }} --ignore-not-found
@@ -436,7 +440,7 @@ ansible-network-down:
 
 # Build a chaincode package with Ansible Blockchain Collection
 ansible-build-chaincode:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
     pushd ${CWDIR}/contracts/asset-transfer-typescript
 
@@ -457,7 +461,7 @@ ansible-build-chaincode:
 
 # Deploy a chaincode package with the Ansible Blockchain Collection
 ansible-deploy-chaincode:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""
@@ -498,7 +502,7 @@ ansible-deploy-chaincode:
 
 # Creates a new identity for an application to use
 ansible-ready-application:
-    #!/bin/bash
+    #!/usr/bin/env bash
     set -ex -o pipefail
 
     export EXTRAS=""

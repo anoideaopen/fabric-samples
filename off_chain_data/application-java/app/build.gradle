@@ -14,17 +14,17 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.hyperledger.fabric:fabric-gateway:1.4.0'
-    implementation 'org.hyperledger.fabric:fabric-protos:0.2.1'
-    compileOnly 'io.grpc:grpc-api:1.59.0'
-    runtimeOnly 'io.grpc:grpc-netty-shaded:1.59.0'
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'org.hyperledger.fabric:fabric-gateway:1.10.0'
+    implementation platform('com.google.protobuf:protobuf-bom:4.33.0')
+    implementation platform('io.grpc:grpc-bom:1.76.0')
+    implementation 'org.hyperledger.fabric:fabric-protos:0.3.7'
+    compileOnly 'io.grpc:grpc-api'
+    runtimeOnly 'io.grpc:grpc-netty-shaded'
+    implementation 'com.google.code.gson:gson:2.13.2'
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(11)
-    }
+compileJava {
+    options.release = 11
 }
 
 checkstyle {

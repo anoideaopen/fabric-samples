@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -32,5 +32,14 @@ pushd ../asset-transfer-private-data/application-gateway-typescript
 npm install
 print "Start application"
 npm start
+popd
+stopNetwork
+
+# Run Go gateway application
+createNetwork
+print "Initializing Go gateway application"
+pushd ../asset-transfer-private-data/application-gateway-go
+print "Executing application"
+go run .
 popd
 stopNetwork

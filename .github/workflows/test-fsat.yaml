@@ -14,45 +14,45 @@ concurrency:
 
 jobs:
   ansible:
-    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-20.04' || 'ubuntu-20.04' }}
+    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-22.04' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Full Stack Runtime
         uses: ./.github/actions/fsat-setup
       - run: just test-ansible
         working-directory: full-stack-asset-transfer-guide
 
   appdev:
-    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-20.04' || 'ubuntu-20.04' }}
+    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-22.04' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Full Stack Runtime
         uses: ./.github/actions/fsat-setup
       - run: just test-appdev
         working-directory: full-stack-asset-transfer-guide
 
   chaincode:
-    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-20.04' || 'ubuntu-20.04' }}
+    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-22.04' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Full Stack Runtime
         uses: ./.github/actions/fsat-setup
       - run: just test-chaincode
         working-directory: full-stack-asset-transfer-guide
 
   cloud:
-    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-20.04' || 'ubuntu-20.04' }}
+    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-22.04' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Full Stack Runtime
         uses: ./.github/actions/fsat-setup
       - run: just test-cloud
         working-directory: full-stack-asset-transfer-guide
 
   console:
-    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-20.04' || 'ubuntu-20.04' }}
+    runs-on: ${{ github.repository == 'hyperledger/fabric-samples' && 'fabric-ubuntu-22.04' || 'ubuntu-22.04' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up Full Stack Runtime
         uses: ./.github/actions/fsat-setup
       - run: just test-console

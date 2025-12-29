@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright IBM Corp All Rights Reserved
 #
@@ -11,7 +11,3 @@ set -ex
 pushd ../test-network
 ./network.sh down
 popd
-
-
-rm -rf application-go/wallet/
-rm -rf application-go/keystore/
